@@ -67,6 +67,7 @@ bool Face_Detect::has_face(Mat image)
     if (eyes.size() != 2)
     {
         good_faces.push_back(image(faces[i]));
+        rectangle( image, Rect( faces[i].x, faces[i].y, faces[i].width, faces[i].height), Scalar( 0, 0, 255 ), 4, 8, 0 );
     }
 
     // for( size_t j = 0; j < eyes.size(); j++ )
@@ -81,5 +82,5 @@ bool Face_Detect::has_face(Mat image)
 
   //-- Show what you got
   // imshow( window_name, image );
-  return (faces.size() > 0);
+  return (good_faces.size() > 0);
  }

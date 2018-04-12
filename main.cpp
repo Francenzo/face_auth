@@ -13,6 +13,7 @@
 #include "face_detect.hpp"
 
 #define THRESHOLD 30
+#define MAX_USERS 10
 
 using namespace std;
 using namespace cv;
@@ -99,13 +100,24 @@ int main(int argc, char* argv[])
 	Mat frame;
   Mat face;
 
-  vector<Mat> users;
-  users.push_back(imread("database/user_0.jpg", CV_LOAD_IMAGE_COLOR));
+  vector<Mat> users_one;
+  vector<Mat> users_two;
+  vector<Mat> users_three;
+  for(int iCount = 0; iCount < MAX_USERS; iCount++)
+  {
+    stringstream ss;
+    ss << "database/user_" << iCount << ".jpg";
+    string dir = ss.str();
+
+    users_one.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
+    users_two.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
+    users_three.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
+  }
 
   Face_Detect face_detect;
-  Algorithm_One algorithm_one(users);
-  Algorithm_Two algorithm_two(users);
-  Algorithm_Three algorithm_three(users);
+  Algorithm_One algorithm_one(users_one);
+  Algorithm_Two algorithm_two(users_two);
+  Algorithm_Three algorithm_three(users_three);
 
   while (true) 
   {
@@ -115,18 +127,30 @@ int main(int argc, char* argv[])
     if (!frame.empty() && face_detect.has_face(frame))
     {
       // cout << "Face found!." << endl;
-      face = face_detect.get_face();
+      vector<Mat> faces = face_detect.get_face_arr();
 
-      int result = 0;
-      result = algorithm_one.compare(face);
-      result = algorithm_two.compare(face);
-      result = algorithm_three.compare(face);
-
-      if (result > THRESHOLD)
+      bool auth = false;
+      for (int iCount = 0; iCount < faces.size(); iCount++)
       {
-        cout << "You passed!!!!!!" << endl;
+        face = faces[iCount];
+        int result = 0;
+        result = algorithm_one.compare(face);
+        result = algorithm_two.compare(face);
+        result = algorithm_three.compare(face);
+
+        if (result > THRESHOLD)
+        {
+          cout << "Authenticated" << endl;
+          auth = true;
+          break;
+        }
+      }
+
+      if (auth)
+      {
         break;
       }
+      
     }
 
     //Wait to allow other processes to run
