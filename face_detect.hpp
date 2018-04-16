@@ -7,7 +7,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include "opencv2/objdetect/objdetect.hpp"
+#include <opencv2/objdetect/objdetect.hpp>
 
 using namespace std;
 using namespace cv;
@@ -22,11 +22,19 @@ class Face_Detect
 public:
     Face_Detect();
     Mat get_face();
+    int face_count;
+    int get_face_count();
     vector<Mat> get_face_arr();
+    vector<Rect> get_rect(); // hehe get rekt
     bool has_face(Mat image);
 
 private:
-    std::vector<Mat> good_faces;
+    // Face and eye detection
+    CascadeClassifier face_cascade;
+    CascadeClassifier eyes_cascade;
+
+    vector<Mat> good_faces;
+    vector<Rect> face_rects;
 
 };
 

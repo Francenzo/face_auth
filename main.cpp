@@ -11,6 +11,7 @@
 #include "alg_one.hpp"
 #include "alg_two.hpp"
 #include "alg_three.hpp"
+#include "alg_quick.hpp"
 #include "face_detect.hpp"
 
 #define THRESHOLD 30
@@ -26,6 +27,7 @@ Face_Detect * face_detect;
 Algorithm_One * algorithm_one;
 Algorithm_Two * algorithm_two;
 Algorithm_Three * algorithm_three;
+Algorithm_Quick * algorithm_quick;
 
 bool keep_running = true;
 bool user_authenticated = false;
@@ -104,15 +106,22 @@ bool do_auth()
 {
   Mat face;
 
+  if (auth_frame.empty())
+  {
+    cout << "Error: Auth image empty!!!" << endl;
+  }
+
   if (!auth_frame.empty() && face_detect->has_face(auth_frame))
   {
     // imshow("Secure Your Face", auth_frame);
-    cout << "Face found!" << endl;
+    // cout << "Face found!" << endl;
     vector<Mat> faces = face_detect->get_face_arr();
 
     for (int iCount = 0; iCount < faces.size(); iCount++)
     {
       face = faces[iCount];
+      algorithm_quick->compare(face);
+      
       int result = 0;
       result = algorithm_one->compare(face);
       result = algorithm_two->compare(face);
@@ -138,7 +147,7 @@ void * algo_thread_func(void *)
   {
     cout << "Running!!!" << endl;
     user_authenticated = do_auth();
-    
+    // sleep(1);
     algo_done = true;
     algo_mtx.lock();
   }
@@ -153,6 +162,7 @@ int main(int argc, char* argv[])
   char c;
   int rc;
   pthread_t algorithm_thread;
+  int face_count = 0;
 
   if (argc == 2)
   {
@@ -170,9 +180,7 @@ int main(int argc, char* argv[])
 	}
 
 
-  vector<Mat> users_one;
-  vector<Mat> users_two;
-  vector<Mat> users_three;
+  vector<Mat> users_one, users_two, users_three, users_quick;
   for(int iCount = 0; iCount < MAX_USERS; iCount++)
   {
     stringstream ss;
@@ -182,12 +190,14 @@ int main(int argc, char* argv[])
     users_one.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
     users_two.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
     users_three.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
+    users_quick.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
   }
 
   face_detect = new Face_Detect();
   algorithm_one = new Algorithm_One(users_one);
   algorithm_two = new Algorithm_Two(users_two);
   algorithm_three = new Algorithm_Three(users_three);
+  algorithm_quick = new Algorithm_Quick(users_quick);
   pthread_create(&algorithm_thread, NULL, algo_thread_func, NULL);
 
   while (true) 
@@ -197,8 +207,20 @@ int main(int argc, char* argv[])
 
     if (algo_done)
     {
+      if (face_detect->get_face_count() > 0)
+      {
+        face_count = 25;
+      }
       auth_frame = frame.clone();
       algo_mtx.unlock();
+    }
+
+    if (face_count > 0)
+    {
+      rectangle( frame, Rect( 0, 0, frame.cols, 30), Scalar( 0, 0, 0 ),  CV_FILLED, 8, 0 );
+      putText(frame, "Analyzing face...", cvPoint(20,20), 
+        FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(255,255,255), 1, CV_AA);
+      face_count--;
     }
 
     if (user_authenticated)
@@ -212,8 +234,12 @@ int main(int argc, char* argv[])
     int c = cvWaitKey(40);
 
     //Exit the loop if esc key
-    if(27 == char(c)) break;
+    if(27 == char(c))
+    {
+      keep_running = false;
+      sleep(1);
+      cout << "Exiting..." << endl;
+      break;
+    }
   }
-
-  keep_running = false;
 }
