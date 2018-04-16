@@ -23,6 +23,7 @@ public:
     Algorithm_Quick(vector<Mat> users);
     int compare(Mat image);
     double eye_face_ratio(Mat face);
+    bool skin_match(Mat face);
 
 private:
     // Face and eye detection

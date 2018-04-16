@@ -28,18 +28,49 @@ Algorithm_Quick::Algorithm_Quick(vector<Mat> users)
 
 int Algorithm_Quick::compare(Mat face)
 {
-    eye_face_ratio(face);
+    // eye_face_ratio(face);
+    skin_match(face);
   return 0;
 }
 
+bool Algorithm_Quick::skin_match(Mat face)
+{
+    std::vector<Rect> eyes;
+
+    //-- Detect eyes
+    eyes_cascade.detectMultiScale( face, eyes, 1.1, 2, 0 |CV_HAAR_SCALE_IMAGE, Size(30, 30) );
+
+    if (eyes.size() == 2)
+    {
+        //Conversion to HSV
+        Mat img_hsv, brown, blue;
+
+        int left = eyes[0].x + (eyes[0].width/2) - 20;
+        int top = eyes[0].y + (eyes[0].height/2) - 20;
+        int side = eyes[0].width/2;
+
+        // cvtColor(face(Rect(left, top, side, side)), img_hsv, CV_BGR2HSV_FULL);
+
+        for (int iCount = 0 ; iCount < eyes.size(); iCount ++)
+        {
+            // inRange(img_hsv, Scalar(112, 100, 100), Scalar(124, 255, 255), blue);
+            inRange(face(eyes[0]), Scalar(10, 0, 0), Scalar(20, 255, 255), brown);
+
+        }
+
+    }
+    else
+    {
+        cout << "Error: invalid eye count: " << eyes.size() << endl;
+    }
+    return true;
+}
+
+
 double Algorithm_Quick::eye_face_ratio(Mat face)
 {
-    Mat frame_gray;
-    double ratio;
-    // cvtColor( face, frame_gray, CV_BGR2GRAY );
-    // equalizeHist( frame_gray, frame_gray );
-    // Mat faceROI = frame_gray(face);
     std::vector<Rect> eyes;
+    int ratio;
 
     //-- Detect eyes
     eyes_cascade.detectMultiScale( face, eyes, 1.1, 2, 0 |CV_HAAR_SCALE_IMAGE, Size(30, 30) );

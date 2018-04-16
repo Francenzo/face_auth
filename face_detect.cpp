@@ -46,6 +46,7 @@ bool Face_Detect::has_face(Mat image)
   // image = image.clone();
   face_count = 0;
   face_rects.clear();
+  good_faces.clear();
 
   cvtColor( image, frame_gray, CV_BGR2GRAY );
   equalizeHist( frame_gray, frame_gray );
