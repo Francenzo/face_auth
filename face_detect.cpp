@@ -45,7 +45,8 @@ bool Face_Detect::has_face(Mat image)
   Mat frame_gray;
   // image = image.clone();
   face_count = 0;
-  face_rects.clear();
+  // face_rects.clear();
+  vector<Rect> tmp_face_rects;
   good_faces.clear();
 
   cvtColor( image, frame_gray, CV_BGR2GRAY );
@@ -67,7 +68,8 @@ bool Face_Detect::has_face(Mat image)
     //-- In each face, detect eyes
     eyes_cascade.detectMultiScale( faceROI, eyes, 1.1, 2, 0 |CV_HAAR_SCALE_IMAGE, Size(30, 30) );
 
-    face_rects.push_back(Rect( faces[i].x, faces[i].y, faces[i].width, faces[i].height));
+    tmp_face_rects.push_back(Rect( faces[i].x, faces[i].y, faces[i].width, faces[i].height));
+    // face_rects.push_back(Rect( faces[i].x, faces[i].y, faces[i].width, faces[i].height));
 
     if (eyes.size() == 2)
     {
@@ -81,6 +83,11 @@ bool Face_Detect::has_face(Mat image)
     //    int radius = cvRound( (eyes[j].width + eyes[j].height)*0.25 );
     //    circle( image, center, radius, Scalar( 255, 0, 0 ), 4, 8, 0 );
     //  }
+  }
+
+  if (tmp_face_rects.size() > 0)
+  {
+    face_rects = tmp_face_rects;
   }
 
   // cout << "faces found = " << good_faces.size() << endl;

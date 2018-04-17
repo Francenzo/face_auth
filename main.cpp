@@ -163,6 +163,7 @@ int main(int argc, char* argv[])
   int rc;
   pthread_t algorithm_thread;
   int face_count = 0;
+  vector<Rect> face_rects;
 
   if (argc == 2)
   {
@@ -187,10 +188,13 @@ int main(int argc, char* argv[])
     ss << "database/user_" << iCount << ".jpg";
     string dir = ss.str();
 
-    users_one.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
-    users_two.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
-    users_three.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
-    users_quick.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
+    if (file_exists(dir))
+    {
+      users_one.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
+      users_two.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
+      users_three.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
+      users_quick.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
+    }
   }
 
   face_detect = new Face_Detect();
@@ -209,6 +213,7 @@ int main(int argc, char* argv[])
     {
       if (face_detect->get_face_count() > 0)
       {
+        face_rects = face_detect->get_rect();
         face_count = 25;
       }
       auth_frame = frame.clone();
@@ -220,7 +225,16 @@ int main(int argc, char* argv[])
       rectangle( frame, Rect( 0, 0, frame.cols, 30), Scalar( 0, 0, 0 ),  CV_FILLED, 8, 0 );
       putText(frame, "Analyzing face...", cvPoint(20,20), 
         FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(255,255,255), 1, CV_AA);
+      if (face_rects.size() > 0)
+      {
+        for (int iCount = 0; iCount < face_rects.size(); iCount++)
+        {
+          rectangle(frame, face_rects[iCount], Scalar(0,0,255), 4,8,0);
+        }
+      }
       face_count--;
+    } else {
+      face_rects.clear();
     }
 
     if (user_authenticated)
