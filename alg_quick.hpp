@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <iostream> 
 #include <vector>
+#include <unistd.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -24,16 +25,15 @@ public:
     Algorithm_Quick(vector<Mat> users);
     int compare(Mat image);
     double eye_face_ratio(Mat face);
-    bool eye_match(Mat face);
-    void comp_histogram(Mat image, Mat compare);
+    int eye_match(Mat face);
+    bool comp_histogram(Mat image, Mat compare);
 
 private:
     // Face and eye detection
     CascadeClassifier face_cascade;
     CascadeClassifier eyes_cascade;
 
-    vector<Mat> eyes_one;
-    vector<Mat> eyes_two;
+    vector< vector<Mat> > eyes_user;
 
 };
 

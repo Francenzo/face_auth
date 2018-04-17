@@ -7,6 +7,8 @@
 
 #include "alg_quick.hpp"
 
+ vector<Mat> blahEyes;
+
 Algorithm_Quick::Algorithm_Quick(vector<Mat> users)
 {
     if( !face_cascade.load(FACE_DETECT_XML) )
@@ -23,39 +25,40 @@ Algorithm_Quick::Algorithm_Quick(vector<Mat> users)
     for (int iCount = 0; iCount < users.size(); iCount++)
     {
         vector<Rect> tmpEyes;
+        vector<Mat> tmpVec;
         Mat tmpUser = users[iCount];
         eyes_cascade.detectMultiScale( tmpUser, tmpEyes, 1.1, 2, 0 |CV_HAAR_SCALE_IMAGE, Size(30, 30) );
-        if (tmpEyes.size() == 2)
+        if (tmpEyes.size() >= 2)
         {
-            Mat tmp;
-            resize(tmpUser(tmpEyes[0]), tmp, Size(EYE_SIZE,EYE_SIZE));
-            eyes_one.push_back(tmp.clone());
-            resize(tmpUser(tmpEyes[1]), tmp, Size(EYE_SIZE,EYE_SIZE));
-            eyes_two.push_back(tmp.clone());
+            for (int jCount = 0; jCount < tmpEyes.size(); jCount++)
+            {
+                tmpVec.push_back(tmpUser(tmpEyes[jCount]));
+            }
+            eyes_user.push_back(tmpVec);
         }
         else
         {
             cout << "Error loading user " << iCount << "." << endl;
         }
-        eye_face_ratio(users[iCount]);
+        // eye_face_ratio(users[iCount]);
     }
 }
 
 int Algorithm_Quick::compare(Mat face)
 {
     // eye_face_ratio(face);
-    // eye_match(face);
-  return 0;
+    return eye_match(face);
+  // return 0;
 }
 
-bool Algorithm_Quick::eye_match(Mat face)
+int Algorithm_Quick::eye_match(Mat face)
 {
     std::vector<Rect> eyes;
 
     //-- Detect eyes
     eyes_cascade.detectMultiScale( face, eyes, 1.1, 2, 0 |CV_HAAR_SCALE_IMAGE, Size(30, 30) );
 
-    if (eyes.size() == 2)
+    if (eyes.size() >= 2)
     {
         //Conversion to HSV
         Mat img_hsv, brown, blue;
@@ -67,26 +70,31 @@ bool Algorithm_Quick::eye_match(Mat face)
 
         // cvtColor(face(Rect(left, top, side, side)), img_hsv, CV_BGR2HSV_FULL);
 
-        // for (int iCount = 0 ; iCount < eyes.size(); iCount ++)
-        // {
+        for (int iCount = 0 ; iCount < eyes.size(); iCount ++)
+        {
             // inRange(img_hsv, Scalar(112, 100, 100), Scalar(124, 255, 255), blue);
             // inRange(face(eyes[0]), Scalar(10, 0, 0), Scalar(20, 255, 255), brown);
             // resize(brown, out, Size(10,10),0,0,INTER_LINEAR);
             // imshow("Secure Your Face", out);
-            cout << "eyes1: " << eyes_one.size() << ", eye2: " << eyes_two.size() << endl;
-            comp_histogram(eyes_one[0].clone(),face(eyes[0]).clone());
-            comp_histogram(eyes_two[0].clone(),face(eyes[1]).clone());
-        // }
+            for (int jCount = 0; jCount < eyes_user.size(); jCount++)
+            {
+                // cout << "eyes: " ;<< iCount << ", eyes_user: " << jCount << endl;
+                bool rc = comp_histogram(eyes_user[jCount].at(0).clone(),face(eyes[iCount]).clone());
+                if (true == rc)
+                    return jCount;
+                // comp_histogram(eyes_two[0].clone(),face(eyes[1]).clone());
+            }
+        }
 
     }
     else
     {
         cout << "Error: invalid eye count: " << eyes.size() << endl;
     }
-    return true;
+    return -1;
 }
 
-void Algorithm_Quick::comp_histogram(Mat image, Mat compare)
+bool Algorithm_Quick::comp_histogram(Mat image, Mat compare)
 {
     Mat src_base, hsv_base;
     Mat src_test1, hsv_test1;
@@ -94,7 +102,7 @@ void Algorithm_Quick::comp_histogram(Mat image, Mat compare)
 
     src_base = image;
     src_test1 = compare;
-    resize(compare, src_test1, Size(EYE_SIZE,EYE_SIZE));
+    // resize(compare, src_test1, Size(EYE_SIZE,EYE_SIZE));
 
     /// Convert to HSV
     cvtColor( src_base, hsv_base, COLOR_BGR2HSV );
@@ -140,8 +148,14 @@ void Algorithm_Quick::comp_histogram(Mat image, Mat compare)
         double base_test1 = compareHist( hist_base, hist_test1, compare_method );
 
         printf( " Method [%d] Perfect, Base-Half, Base-Test(1) : %f, %f, %f \n", i, base_base, base_half , base_test1 );
+
+        if (i == 0 && base_test1 > 0.1)
+            return true;
+
+        break;
     }
     printf("=================\r\n\r\n");
+    return false;
 }
 
 

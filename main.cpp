@@ -120,7 +120,15 @@ bool do_auth()
     for (int iCount = 0; iCount < faces.size(); iCount++)
     {
       face = faces[iCount];
-      algorithm_quick->compare(face);
+      int rc = algorithm_quick->compare(face);
+      if (rc >= 0)
+      {
+        return true;
+      }
+      else
+      {
+        cout << "rc = " << rc << endl;
+      }
       
       int result = 0;
       result = algorithm_one->compare(face);
@@ -222,9 +230,6 @@ int main(int argc, char* argv[])
 
     if (face_count > 0)
     {
-      rectangle( frame, Rect( 0, 0, frame.cols, 30), Scalar( 0, 0, 0 ),  CV_FILLED, 8, 0 );
-      putText(frame, "Analyzing face...", cvPoint(20,20), 
-        FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(255,255,255), 1, CV_AA);
       if (face_rects.size() > 0)
       {
         for (int iCount = 0; iCount < face_rects.size(); iCount++)
@@ -232,16 +237,43 @@ int main(int argc, char* argv[])
           rectangle(frame, face_rects[iCount], Scalar(0,0,255), 4,8,0);
         }
       }
+      if (user_authenticated)
+      {
+        rectangle( frame, Rect( 0, 0, frame.cols, 30), Scalar( 0, 255, 0 ),  CV_FILLED, 8, 0 );
+        putText(frame, "Authenticated!!", cvPoint(20,20), 
+          FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(255,255,255), 1, CV_AA);
+      }
+      else
+      {
+
+        rectangle( frame, Rect( 0, 0, frame.cols, 30), Scalar( 0, 0, 0 ),  CV_FILLED, 8, 0 );
+        putText(frame, "Analyzing face...", cvPoint(20,20), 
+          FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(255,255,255), 1, CV_AA);
+      }
       face_count--;
     } else {
+      user_authenticated = false;
       face_rects.clear();
     }
 
-    if (user_authenticated)
-    {
-      cout << "Authenticated" << endl;
-      break;
-    }
+    // if (user_authenticated)
+    // {
+    //   cout << "Authenticated" << endl;
+    //   rectangle( frame, Rect( 0, 0, frame.cols, 30), Scalar( 0, 255, 0 ),  CV_FILLED, 8, 0 );
+    //   putText(frame, "Authenticated!!", cvPoint(20,20), 
+    //     FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(255,255,255), 1, CV_AA);
+    //   if (face_rects.size() > 0)
+    //   {
+    //     for (int iCount = 0; iCount < face_rects.size(); iCount++)
+    //     {
+    //       rectangle(frame, face_rects[iCount], Scalar(0,0,255), 4,8,0);
+    //     }
+    //   }
+    //   user_authenticated = false;
+    //   imshow("Secure Your Face", frame);
+    //   cvWaitKey(40);
+    //   sleep(5);
+    // }
 
     //Wait to allow other processes to run
     imshow("Secure Your Face", frame);
