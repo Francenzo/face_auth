@@ -147,14 +147,14 @@ bool Algorithm_Quick::comp_histogram(Mat image, Mat compare)
         double base_half = compareHist( hist_base, hist_half_down, compare_method );
         double base_test1 = compareHist( hist_base, hist_test1, compare_method );
 
-        printf( " Method [%d] Perfect, Base-Half, Base-Test(1) : %f, %f, %f \n", i, base_base, base_half , base_test1 );
+        // printf( " Method [%d] Perfect, Base-Half, Base-Test(1) : %f, %f, %f \n", i, base_base, base_half , base_test1 );
 
         if (i == 0 && base_test1 > 0.1)
             return true;
 
         break;
     }
-    printf("=================\r\n\r\n");
+    // printf("=================\r\n\r\n");
     return false;
 }
 

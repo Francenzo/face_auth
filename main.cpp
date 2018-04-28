@@ -16,9 +16,13 @@
 
 #define THRESHOLD 30
 #define MAX_USERS 10
+#define MAX_TEST_IMAGES 20000
 
 using namespace std;
 using namespace cv;
+
+// If TRUE then testing
+bool TEST_MODE = false;
 
 // Frame used during authentication cycle
 Mat auth_frame;
@@ -42,6 +46,24 @@ bool file_exists(string name)
 {
   ifstream f(name.c_str());
   return f.good();
+}
+
+bool directory_exists( const char* pzPath )
+{
+    if ( pzPath == NULL) return false;
+
+    DIR *pDir;
+    bool bExists = false;
+
+    pDir = opendir (pzPath);
+
+    if (pDir != NULL)
+    {
+        bExists = true;    
+        (void) closedir (pDir);
+    }
+
+    return bExists;
 }
 
 //
@@ -127,7 +149,7 @@ bool do_auth()
       }
       else
       {
-        cout << "rc = " << rc << endl;
+        // cout << "rc = " << rc << endl;
       }
       
       int result = 0;
@@ -154,10 +176,73 @@ void * algo_thread_func(void *)
   while (keep_running)
   {
     cout << "Running!!!" << endl;
-    user_authenticated = do_auth();
+    if(do_auth())
+    {
+      user_authenticated = true;
+    } 
     // sleep(1);
     algo_done = true;
     algo_mtx.lock();
+  }
+}
+
+void test_algorithms()
+{
+  int test_count = 0;
+  int used_count = 0;
+  int accepted_count =0;
+
+  cout << "Running algorithm against test data set." << endl;
+
+  vector<Mat> users_one, users_two, users_three, users_quick;
+  for(int iCount = 0; iCount < MAX_USERS; iCount++)
+  {
+    stringstream ss;
+    ss << "database/user_" << iCount << ".jpg";
+    string dir = ss.str();
+
+    if (file_exists(dir))
+    {
+      users_one.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
+      users_two.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
+      users_three.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
+      users_quick.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
+    }
+  }
+
+  face_detect = new Face_Detect();
+  algorithm_one = new Algorithm_One(users_one);
+  algorithm_two = new Algorithm_Two(users_two);
+  algorithm_three = new Algorithm_Three(users_three);
+  algorithm_quick = new Algorithm_Quick(users_quick);
+
+  while (test_count < MAX_TEST_IMAGES)
+  {
+    stringstream ss;
+    ss << "test_faces/test_" << test_count << ".jpg";
+    string test_file_path = ss.str();
+    if (file_exists(test_file_path))
+    {
+      auth_frame = imread(test_file_path, CV_LOAD_IMAGE_COLOR);
+      if (do_auth())
+      {
+        accepted_count++;
+      }
+      if (face_detect->get_face_count() > 0)
+      {
+        used_count++;
+      }
+    }
+    else
+    {
+      cout << "End of test..." << endl;
+      cout << "Data set size: " << test_count << endl;
+      cout << "Used: " << used_count << endl;
+      cout << "Accepted Count: " << accepted_count << endl;
+      exit(0);
+    }
+
+    test_count++;
   }
 }
 
@@ -179,6 +264,11 @@ int main(int argc, char* argv[])
     {
       save_face();
     }
+    if (strcmp(argv[1], "-t") == 0)
+    {
+      test_algorithms();
+    }
+
   }
 
 	VideoCapture camera(0);
@@ -187,7 +277,6 @@ int main(int argc, char* argv[])
 		cout << "Error: Camera is missing." << endl;
 		exit(-1);
 	}
-
 
   vector<Mat> users_one, users_two, users_three, users_quick;
   for(int iCount = 0; iCount < MAX_USERS; iCount++)
