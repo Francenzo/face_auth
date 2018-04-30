@@ -5,39 +5,71 @@
  *
  */
 
+
+
 #include "alg_three.hpp"
 
-Algorithm_Three::Algorithm_Three(vector<Mat> users)
+Algorithm_Three::Algorithm_Three(vector<Mat> users) 
 {
     // Constructor
 }
 
-template <typename _Tp>
-int Algorithm_Three::compare(Mat face) //int Algorithm_Three::compare(Mat _src, Mat _dst)
+int Algorithm_Three::compare(Mat face)
 {
+    // INSERT ALGORITHM HERE
+    if (argc <2)   
+　　{  
+        cout <<"usage: "<< argv[0]<<" <csv.ext> <output_folder> "<< endl;  
+        exit(1);  
+  
+    }  
+  
+    string output_folder;  
+  
+    if (argc ==3)   
+　　{  
+  
+        output_folder = string(argv[2]);  
+  
+    }  
+  
+    // read your CSV path
+  
+    string fn_csv = string(argv[1]);  
+    // Use two containers to save images and correspongding labels 
+    vector<Mat> images;  
+    vector<int> labels;  
+    // read the data, if the file is invalid, output error
+    // the file you enter already exist
+    try {  
+  
+        read_csv(fn_csv, images, labels);  
+  
+    } catch (cv::Exception& e) {  
+        cerr <<"Error opening file \""<< fn_csv <<"\". Reason: "<< e.msg << endl;  
+        // the file has problem, just exit
+        exit(1);  
+    }  
+  
+   
+    if(images.size()<=1) {  
+        string error_message ="This demo needs at least 2 images to work. Please add more images to your data set!";  
+        CV_Error(CV_StsError, error_message);  
+    }  
+  
+    int height = images[0].rows;  
+    Mat testSample = images[images.size() -1];  
+    int testLabel = labels[labels.size() -1];  
+    images.pop_back();  
+    labels.pop_back();  
     
-	/*
-	Mat src = _src.getMat()
-	_dst.create(src.rows-2, src.cols-2, CV_8UC1);
-	Mat dst = _dst.getMat();
-	dst.setTo(0);
-	for(int i=1; i < src.rows-1; i++) {
-		for(int j=1; j < src.cols-1; j++) {
-			_Tp center = src.at<_Tp>(i,j);
-			unsigned char code = 0;
-			code |= (src.at<_Tp>(i-1,j-1) > center) << 7;
-			code |= (src.at<_Tp>(i-1,j) > center) << 6;
-			code |= (src.at<_Tp>(i-1,j+1) > center) << 5;
-			code |= (src.at<_Tp>(i,j+1) > center) << 4;
-			code |= (src.at<_Tp>(i+1,j+1) > center) << 3;
-			code |= (src.at<_Tp>(i+1,j) > center) << 2;
-			code |= (src.at<_Tp>(i+1,j-1) > center) << 1;
-			code |= (src.at<_Tp>(i,j-1) > center) << 0;
-			dst.at<unsigned char>(i-1,j-1) = code;
-		}
-	}
-	*/
-	
-	
-  return 0;
+    Ptr<FaceRecognizer> model1 = createLBPHFaceRecognizer();
+    model->train(images, labels);  
+   
+    int predictedLabel = model->predict(testSample);  
+    
+  
+    string result_message = format("Predicted class = %d / Actual class = %d.", predictedLabel, testLabel);  
+    cout << result_message << endl;  
+    return 0;
 }
