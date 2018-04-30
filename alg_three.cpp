@@ -14,28 +14,31 @@ Algorithm_Three::Algorithm_Three(vector<Mat> users)
     // Constructor
 }
 
+void read_csv_three(const string& filename, vector<Mat>& images, vector<int>& labels, char separator = ';') {
+    // std::ifstream file(filename.c_str(), ifstream::in);
+    // if (!file) {
+    //     string error_message = "No valid input file was given, please check the given filename.";
+    //     CV_Error(CV_StsBadArg, error_message);
+    // }
+    // string line, path, classlabel;
+    // while (getline(file, line)) {
+    //     stringstream liness(line);
+    //     getline(liness, path, separator);
+    //     getline(liness, classlabel);
+    //     if(!path.empty() && !classlabel.empty()) {
+    //         images.push_back(imread(path, 0));
+    //         labels.push_back(atoi(classlabel.c_str()));
+    //     }
+    // }
+}
+
 int Algorithm_Three::compare(Mat face)
 {
     // INSERT ALGORITHM HERE
-    if (argc <2)   
-　　{  
-        cout <<"usage: "<< argv[0]<<" <csv.ext> <output_folder> "<< endl;  
-        exit(1);  
-  
-    }  
-  
-    string output_folder;  
-  
-    if (argc ==3)   
-　　{  
-  
-        output_folder = string(argv[2]);  
-  
-    }  
-  
     // read your CSV path
-  
-    string fn_csv = string(argv[1]);  
+    return 0;
+
+    string fn_csv;  
     // Use two containers to save images and correspongding labels 
     vector<Mat> images;  
     vector<int> labels;  
@@ -43,7 +46,7 @@ int Algorithm_Three::compare(Mat face)
     // the file you enter already exist
     try {  
   
-        read_csv(fn_csv, images, labels);  
+        read_csv_three(fn_csv, images, labels);  
   
     } catch (cv::Exception& e) {  
         cerr <<"Error opening file \""<< fn_csv <<"\". Reason: "<< e.msg << endl;  
@@ -63,7 +66,7 @@ int Algorithm_Three::compare(Mat face)
     images.pop_back();  
     labels.pop_back();  
     
-    Ptr<FaceRecognizer> model1 = createLBPHFaceRecognizer();
+    Ptr<FaceRecognizer> model = createLBPHFaceRecognizer();
     model->train(images, labels);  
    
     int predictedLabel = model->predict(testSample);  
@@ -71,5 +74,4 @@ int Algorithm_Three::compare(Mat face)
   
     string result_message = format("Predicted class = %d / Actual class = %d.", predictedLabel, testLabel);  
     cout << result_message << endl;  
-    return 0;
 }
