@@ -12,7 +12,7 @@ class Algorithm_One
 {
 
 public:
-    Algorithm_One(vector<Mat> users);
+    Algorithm_One(vector<Mat> users, vector<int> labels);
     int compare(Mat image);
 
 private:

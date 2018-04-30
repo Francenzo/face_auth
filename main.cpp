@@ -195,24 +195,32 @@ void test_algorithms()
   cout << "Running algorithm against test data set." << endl;
 
   vector<Mat> users_one, users_two, users_three, users_quick;
+  vector<int> labels;
+
   for(int iCount = 0; iCount < MAX_USERS; iCount++)
   {
-    stringstream ss;
-    ss << "database/user_" << iCount << ".jpg";
-    string dir = ss.str();
-
-    if (file_exists(dir))
+    for (int jCount = 1; jCount < 6; jCount++)
     {
-      users_one.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
-      users_two.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
-      users_three.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
-      users_quick.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
+      stringstream ss;
+      ss << "test_faces/test_" << jCount << "_" <<  iCount << ".jpg";
+      string dir = ss.str();
+      if (file_exists(dir))
+      {
+        Mat tmpMat = imread(dir, CV_LOAD_IMAGE_GRAYSCALE);
+        resize(tmpMat, tmpMat, Size(100,100), 0, 0, CV_INTER_AREA);
+
+        users_one.push_back(tmpMat);
+        users_two.push_back(tmpMat);
+        users_three.push_back(tmpMat);
+        
+        labels.push_back(iCount);
+      }
     }
   }
 
   face_detect = new Face_Detect();
-  algorithm_one = new Algorithm_One(users_one);
-  algorithm_two = new Algorithm_Two(users_two);
+  algorithm_one = new Algorithm_One(users_one, labels);
+  algorithm_two = new Algorithm_Two(users_two, labels);
   algorithm_three = new Algorithm_Three(users_three);
   algorithm_quick = new Algorithm_Quick(users_quick);
 
@@ -247,6 +255,44 @@ void test_algorithms()
 }
 
 //
+// DELETE THIS FUNCTION WHEN DONE
+//
+void test_algorithms_two()
+{
+  int test_count = 0;
+  int used_count = 0;
+  int accepted_count =0;
+
+  cout << "Testing algorithm two." << endl;
+
+  vector<Mat> users_two;
+  vector<int> labels_two;
+  for(int iCount = 0; iCount < 100; iCount++)
+  {
+    for (int jCount = 0; jCount < 6; jCount++)
+    {
+      stringstream ss;
+      ss << "test_faces/test_" << jCount << "_" <<  iCount << ".jpg";
+      string dir = ss.str();
+      if (file_exists(dir))
+      {
+        Mat tmpMat = imread(dir, CV_LOAD_IMAGE_GRAYSCALE);
+        resize(tmpMat, tmpMat, Size(100,100), 0, 0, CV_INTER_AREA);
+        users_two.push_back(tmpMat);
+        labels_two.push_back(iCount);
+      }
+    }
+    
+  }
+
+  cout << "Size = " << users_two.size() << endl;
+
+  algorithm_two = new Algorithm_Two(users_two, labels_two);
+
+  exit(0);
+}
+
+//
 // Main thread
 //
 int main(int argc, char* argv[])
@@ -267,6 +313,7 @@ int main(int argc, char* argv[])
     if (strcmp(argv[1], "-t") == 0)
     {
       test_algorithms();
+      // test_algorithms_two();
     }
 
   }
@@ -279,6 +326,7 @@ int main(int argc, char* argv[])
 	}
 
   vector<Mat> users_one, users_two, users_three, users_quick;
+  vector<int> labels;
   for(int iCount = 0; iCount < MAX_USERS; iCount++)
   {
     stringstream ss;
@@ -295,8 +343,8 @@ int main(int argc, char* argv[])
   }
 
   face_detect = new Face_Detect();
-  algorithm_one = new Algorithm_One(users_one);
-  algorithm_two = new Algorithm_Two(users_two);
+  algorithm_one = new Algorithm_One(users_one, labels);
+  algorithm_two = new Algorithm_Two(users_two, labels);
   algorithm_three = new Algorithm_Three(users_three);
   algorithm_quick = new Algorithm_Quick(users_quick);
   pthread_create(&algorithm_thread, NULL, algo_thread_func, NULL);

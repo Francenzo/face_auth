@@ -7,7 +7,7 @@
 
 #include "alg_one.hpp"
 
-Algorithm_One::Algorithm_One(vector<Mat> users) 
+Algorithm_One::Algorithm_One(vector<Mat> users, vector<int> labels) 
 {
     // Constructor
 }
