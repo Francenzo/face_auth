@@ -7,6 +7,8 @@
 #include <mutex>
 #include <dirent.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <time.h>
 
 #include "alg_one.hpp"
 #include "alg_two.hpp"
@@ -23,6 +25,8 @@ using namespace cv;
 
 // If TRUE then testing
 bool TEST_MODE = false;
+
+Size IMAGE_SIZE(100,100);
 
 // Frame used during authentication cycle
 Mat auth_frame;
@@ -80,6 +84,7 @@ void save_face()
 
   Mat frame;
   Mat face;
+  vector<Mat> user;
   Face_Detect face_detect;
 
   while (true) 
@@ -95,24 +100,33 @@ void save_face()
       if (!face.empty())
       {
         cout << "Face found!" << endl;
-        break;
+        user.push_back(face);
+        if (user.size() >= 2)
+        {
+          break;
+        }
       }
     }
 
     //Wait to allow other processes to run
-    imshow("Secure Your Face", frame);
+    // imshow("Secure Your Face", frame);
   }
 
   int iCount = 0;
   while (true) 
   {
     stringstream ss;
-    ss << "database/user_" << iCount << ".jpg";
+    ss << "database/user_" << iCount << "_one.jpg";
     string dir = ss.str();
+
+    stringstream ss2;
+    ss2 << "database/user_" << iCount << "_two.jpg";
+    string dir2 = ss2.str();
 
     if (!file_exists(dir))
     {
-      imwrite(dir,face);
+      imwrite(dir,user[0]);
+      imwrite(dir2,user[1]);
       cout << "File saved to: " << dir << endl;
       exit(0);
     } else {
@@ -142,6 +156,8 @@ bool do_auth()
     for (int iCount = 0; iCount < faces.size(); iCount++)
     {
       face = faces[iCount];
+      cvtColor(face, face, CV_BGR2GRAY);
+      resize(face, face, IMAGE_SIZE, 0, 0, CV_INTER_AREA);
       int rc = algorithm_quick->compare(face);
       if (rc >= 0)
       {
@@ -192,31 +208,63 @@ void test_algorithms()
   int used_count = 0;
   int accepted_count =0;
 
+  srand(time(NULL));
+
   cout << "Running algorithm against test data set." << endl;
 
   vector<Mat> users_one, users_two, users_three, users_quick;
   vector<int> labels;
 
+  int rand_num = rand() % 2000; 
+
   for(int iCount = 0; iCount < MAX_USERS; iCount++)
   {
+    // Need users with at least two images
+    bool user_found = false;
+    while (!user_found)
+    {
+      stringstream test_ss;
+      test_ss << "test_faces/test_1_" <<  rand_num << ".jpg";
+      string test_dir = test_ss.str();
+
+      stringstream test_ss_2;
+      test_ss_2 << "test_faces/test_2_" <<  rand_num << ".jpg";
+      string test_dir_2 = test_ss_2.str();
+
+      // cout << "running..." << test_dir << " | " << test_dir_2 << endl;
+
+      if (file_exists(test_dir) && file_exists(test_dir_2))
+      {
+        user_found = true;
+        cout << "Found user..." << endl;
+      }
+      else
+      {
+        rand_num++;
+      }
+    }
+
     for (int jCount = 1; jCount < 6; jCount++)
     {
       stringstream ss;
-      ss << "test_faces/test_" << jCount << "_" <<  iCount << ".jpg";
+      ss << "test_faces/test_" << jCount << "_" <<  rand_num << ".jpg";
       string dir = ss.str();
       if (file_exists(dir))
       {
+        cout << "Using: " << dir << endl;
         Mat tmpMat = imread(dir, CV_LOAD_IMAGE_GRAYSCALE);
-        resize(tmpMat, tmpMat, Size(100,100), 0, 0, CV_INTER_AREA);
+        resize(tmpMat, tmpMat, IMAGE_SIZE, 0, 0, CV_INTER_AREA);
 
         users_one.push_back(tmpMat);
         users_two.push_back(tmpMat);
         users_three.push_back(tmpMat);
         
-        labels.push_back(iCount);
+        labels.push_back(iCount + 1);
       }
     }
   }
+
+  // cout << "Users2 size = " << users_two.size() << endl;
 
   face_detect = new Face_Detect();
   algorithm_one = new Algorithm_One(users_one, labels);
@@ -227,7 +275,7 @@ void test_algorithms()
   while (test_count < MAX_TEST_IMAGES)
   {
     stringstream ss;
-    ss << "test_faces/test_" << test_count << ".jpg";
+    ss << "test_faces/test_1_" << test_count << ".jpg";
     string test_file_path = ss.str();
     if (file_exists(test_file_path))
     {
@@ -252,44 +300,6 @@ void test_algorithms()
 
     test_count++;
   }
-}
-
-//
-// DELETE THIS FUNCTION WHEN DONE
-//
-void test_algorithms_two()
-{
-  int test_count = 0;
-  int used_count = 0;
-  int accepted_count =0;
-
-  cout << "Testing algorithm two." << endl;
-
-  vector<Mat> users_two;
-  vector<int> labels_two;
-  for(int iCount = 0; iCount < 100; iCount++)
-  {
-    for (int jCount = 0; jCount < 6; jCount++)
-    {
-      stringstream ss;
-      ss << "test_faces/test_" << jCount << "_" <<  iCount << ".jpg";
-      string dir = ss.str();
-      if (file_exists(dir))
-      {
-        Mat tmpMat = imread(dir, CV_LOAD_IMAGE_GRAYSCALE);
-        resize(tmpMat, tmpMat, Size(100,100), 0, 0, CV_INTER_AREA);
-        users_two.push_back(tmpMat);
-        labels_two.push_back(iCount);
-      }
-    }
-    
-  }
-
-  cout << "Size = " << users_two.size() << endl;
-
-  algorithm_two = new Algorithm_Two(users_two, labels_two);
-
-  exit(0);
 }
 
 //
@@ -330,15 +340,36 @@ int main(int argc, char* argv[])
   for(int iCount = 0; iCount < MAX_USERS; iCount++)
   {
     stringstream ss;
-    ss << "database/user_" << iCount << ".jpg";
+    ss << "database/user_" << iCount << "_one.jpg";
     string dir = ss.str();
+
+    stringstream ss2;
+    ss2 << "database/user_" << iCount << "_two.jpg";
+    string dir2 = ss.str();
 
     if (file_exists(dir))
     {
-      users_one.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
-      users_two.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
-      users_three.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
+
+      Mat tmpMat = imread(dir, CV_LOAD_IMAGE_GRAYSCALE);
+      resize(tmpMat, tmpMat, IMAGE_SIZE, 0, 0, CV_INTER_AREA);
+
+      Mat tmpMat2 = imread(dir2, CV_LOAD_IMAGE_GRAYSCALE);
+      resize(tmpMat2, tmpMat2, IMAGE_SIZE, 0, 0, CV_INTER_AREA);
+
+
+      users_one.push_back(tmpMat.clone());
+      users_two.push_back(tmpMat.clone());
+      users_three.push_back(tmpMat.clone());
+
+      users_one.push_back(tmpMat2.clone());
+      users_two.push_back(tmpMat2.clone());
+      users_three.push_back(tmpMat2.clone());
+
       users_quick.push_back(imread(dir, CV_LOAD_IMAGE_COLOR));
+
+      labels.push_back(iCount);
+      labels.push_back(iCount);
+
     }
   }
 
@@ -352,6 +383,9 @@ int main(int argc, char* argv[])
   while (true) 
   {
   	camera >> frame;
+
+    if (frame.empty())
+      continue;
   	// cout << "Capturing frame..." << endl;
 
     if (algo_done)
