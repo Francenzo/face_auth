@@ -1,9 +1,11 @@
-#ifndef _FACE_DETECTION_
-#define _FACE_DETECTION_
+#ifndef _ALGORITHM_QUICK_
+#define _ALGORITHM_QUICK_
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <iostream> 
 #include <vector>
+#include <unistd.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -14,28 +16,26 @@ using namespace cv;
 
 #define FACE_DETECT_XML "haarcascades/haarcascade_frontalface_alt.xml"
 #define EYE_DETECT_XML "haarcascades/haarcascade_eye_tree_eyeglasses.xml"
+#define EYE_SIZE 20
 
-
-class Face_Detect
+class Algorithm_Quick
 {
 
 public:
-    Face_Detect();
-    Mat get_face();
-    int face_count;
-    int get_face_count();
-    vector<Mat> get_face_arr();
-    vector<Rect> get_rect(); // hehe get rekt
-    bool has_face(Mat image);
+    Algorithm_Quick(vector<Mat> users);
+    int compare(Mat image);
+    double eye_face_ratio(Mat face);
+    int eye_match(Mat face);
+    bool comp_histogram(Mat image, Mat compare);
 
 private:
     // Face and eye detection
     CascadeClassifier face_cascade;
     CascadeClassifier eyes_cascade;
 
-    vector<Mat> good_faces;
-    vector<Rect> face_rects;
+    vector< vector<Mat> > eyes_user;
 
 };
+
 
 #endif

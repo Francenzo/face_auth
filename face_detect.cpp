@@ -7,10 +7,6 @@
 
 #include "face_detect.hpp"
 
- // Face and eye detection
- CascadeClassifier face_cascade;
- CascadeClassifier eyes_cascade;
-
  Face_Detect::Face_Detect()
  {
     if( !face_cascade.load(FACE_DETECT_XML) )
@@ -38,7 +34,9 @@ Mat Face_Detect::get_face()
   return face; 
 }
 
+int Face_Detect::get_face_count() { return face_count; }
 vector<Mat> Face_Detect::get_face_arr() { return good_faces; }
+vector<Rect> Face_Detect::get_rect() { return face_rects; }
 
 /** @function detectAndDisplay changed to work with current implementation */
 bool Face_Detect::has_face(Mat image)
@@ -46,12 +44,18 @@ bool Face_Detect::has_face(Mat image)
   std::vector<Rect> faces;
   Mat frame_gray;
   // image = image.clone();
+  face_count = 0;
+  // face_rects.clear();
+  vector<Rect> tmp_face_rects;
+  good_faces.clear();
 
   cvtColor( image, frame_gray, CV_BGR2GRAY );
   equalizeHist( frame_gray, frame_gray );
 
   //-- Detect faces
   face_cascade.detectMultiScale( frame_gray, faces, 1.1, 2, 0| CV_HAAR_SCALE_IMAGE, Size(30, 30) );
+
+  face_count = faces.size();
 
   for( int i = 0; i < faces.size(); i++ )
   {
@@ -64,9 +68,13 @@ bool Face_Detect::has_face(Mat image)
     //-- In each face, detect eyes
     eyes_cascade.detectMultiScale( faceROI, eyes, 1.1, 2, 0 |CV_HAAR_SCALE_IMAGE, Size(30, 30) );
 
-    if (eyes.size() != 2)
+    tmp_face_rects.push_back(Rect( faces[i].x, faces[i].y, faces[i].width, faces[i].height));
+    // face_rects.push_back(Rect( faces[i].x, faces[i].y, faces[i].width, faces[i].height));
+
+    if (eyes.size() >= 1)
     {
-        good_faces.push_back(image(faces[i]));
+      good_faces.push_back(image(faces[i]));
+      rectangle( image, Rect( faces[i].x, faces[i].y, faces[i].width, faces[i].height), Scalar( 0, 0, 255 ), 4, 8, 0 );
     }
 
     // for( size_t j = 0; j < eyes.size(); j++ )
@@ -77,9 +85,14 @@ bool Face_Detect::has_face(Mat image)
     //  }
   }
 
+  if (tmp_face_rects.size() > 0)
+  {
+    face_rects = tmp_face_rects;
+  }
+
   // cout << "faces found = " << good_faces.size() << endl;
 
   //-- Show what you got
   // imshow( window_name, image );
-  return (faces.size() > 0);
+  return (good_faces.size() > 0);
  }
