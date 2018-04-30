@@ -28,7 +28,7 @@ Algorithm_Quick::Algorithm_Quick(vector<Mat> users)
         vector<Mat> tmpVec;
         Mat tmpUser = users[iCount];
         eyes_cascade.detectMultiScale( tmpUser, tmpEyes, 1.1, 2, 0 |CV_HAAR_SCALE_IMAGE, Size(30, 30) );
-        if (tmpEyes.size() >= 2)
+        if (tmpEyes.size() >= 1)
         {
             for (int jCount = 0; jCount < tmpEyes.size(); jCount++)
             {
@@ -51,6 +51,10 @@ int Algorithm_Quick::compare(Mat face)
   // return 0;
 }
 
+
+//
+// histogram comparison of eyes
+//
 int Algorithm_Quick::eye_match(Mat face)
 {
     std::vector<Rect> eyes;
@@ -58,7 +62,7 @@ int Algorithm_Quick::eye_match(Mat face)
     //-- Detect eyes
     eyes_cascade.detectMultiScale( face, eyes, 1.1, 2, 0 |CV_HAAR_SCALE_IMAGE, Size(30, 30) );
 
-    if (eyes.size() >= 2)
+    if (eyes.size() >= 1)
     {
         //Conversion to HSV
         Mat img_hsv, brown, blue;
@@ -89,10 +93,14 @@ int Algorithm_Quick::eye_match(Mat face)
     }
     else
     {
-        cout << "Error: invalid eye count: " << eyes.size() << endl;
+        // cout << "Error: invalid eye count: " << eyes.size() << endl;
     }
     return -1;
 }
+
+//
+// Compare histogram of two images
+//
 
 bool Algorithm_Quick::comp_histogram(Mat image, Mat compare)
 {
@@ -139,6 +147,7 @@ bool Algorithm_Quick::comp_histogram(Mat image, Mat compare)
     calcHist( &hsv_test1, 1, channels, Mat(), hist_test1, 2, histSize, ranges, true, false );
     normalize( hist_test1, hist_test1, 0, 1, NORM_MINMAX, -1, Mat() );
 
+
     /// Apply the histogram comparison methods
     for( int i = 0; i < 4; i++ )
     {
@@ -149,8 +158,11 @@ bool Algorithm_Quick::comp_histogram(Mat image, Mat compare)
 
         // printf( " Method [%d] Perfect, Base-Half, Base-Test(1) : %f, %f, %f \n", i, base_base, base_half , base_test1 );
 
-        if (i == 0 && base_test1 > 0.1)
+        if (base_test1 > -2)
+        {
+            // cout << "quick accept" << endl;
             return true;
+        }
 
         break;
     }
@@ -177,7 +189,7 @@ double Algorithm_Quick::eye_face_ratio(Mat face)
     }
     else
     {
-        cout << "Error: invalid eye count: " << eyes.size() << endl;
+        // cout << "Error: invalid eye count: " << eyes.size() << endl;
     }
     return ratio;
 }

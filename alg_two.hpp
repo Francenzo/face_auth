@@ -20,6 +20,7 @@ public:
 
 private:
     Ptr<FaceRecognizer> model;
+    double ACCEPTANCE_THRESHOLD = 1000.00;
 };
 
 #endif

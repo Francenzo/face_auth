@@ -71,7 +71,7 @@ bool Face_Detect::has_face(Mat image)
     tmp_face_rects.push_back(Rect( faces[i].x, faces[i].y, faces[i].width, faces[i].height));
     // face_rects.push_back(Rect( faces[i].x, faces[i].y, faces[i].width, faces[i].height));
 
-    if (eyes.size() >= 2)
+    if (eyes.size() >= 1)
     {
       good_faces.push_back(image(faces[i]));
       rectangle( image, Rect( faces[i].x, faces[i].y, faces[i].width, faces[i].height), Scalar( 0, 0, 255 ), 4, 8, 0 );

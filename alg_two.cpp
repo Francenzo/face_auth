@@ -20,6 +20,16 @@ int Algorithm_Two::compare(Mat face)
     double confidence = 0.0;
     model->predict(face, predictedLabel, confidence);  
     
-    string result_message = format("Predicted class = %d | confidence = %f", predictedLabel, confidence);  
-    cout << result_message << endl; 
+    // string result_message = format("Predicted class = %d | confidence = %f", predictedLabel, confidence);  
+    // cout << result_message << endl; 
+
+    if (confidence < ACCEPTANCE_THRESHOLD)
+    {
+        // cout << "accepted" << endl; 
+        return predictedLabel;
+    }
+    else
+    {
+        return -1;
+    }
 }

@@ -18,7 +18,7 @@
 
 #define THRESHOLD 30
 #define MAX_USERS 10
-#define MAX_TEST_IMAGES 20000
+#define MAX_TEST_IMAGES 3000
 
 using namespace std;
 using namespace cv;
@@ -41,6 +41,11 @@ bool keep_running = true;
 bool user_authenticated = false;
 bool algo_done = false;
 mutex algo_mtx;  // Mutex lock for algo thread
+
+int accept_count_quick = 0;
+int accept_count_alg_one = 0;
+int accept_count_alg_two = 0;
+int accept_count_alg_three = 0;
 
 
 //
@@ -156,24 +161,46 @@ bool do_auth()
     for (int iCount = 0; iCount < faces.size(); iCount++)
     {
       face = faces[iCount];
-      cvtColor(face, face, CV_BGR2GRAY);
-      resize(face, face, IMAGE_SIZE, 0, 0, CV_INTER_AREA);
       int rc = algorithm_quick->compare(face);
       if (rc >= 0)
       {
-        return true;
+        // cout << "rc = " << rc << endl;
+        accept_count_quick++;
       }
       else
       {
-        // cout << "rc = " << rc << endl;
+        // return false;
       }
-      
-      int result = 0;
-      result = algorithm_one->compare(face);
-      result = algorithm_two->compare(face);
-      result = algorithm_three->compare(face);
 
-      if (result > THRESHOLD)
+      cvtColor(face, face, CV_BGR2GRAY);
+      resize(face, face, IMAGE_SIZE, 0, 0, CV_INTER_AREA);
+      
+      int result_one = -1;
+      int result_two = -1;
+      int result_three = -1;
+
+      result_one = algorithm_one->compare(face);
+      // cout << "Alg one: " << result << endl;
+      if (result_one > -1)
+      {
+        accept_count_alg_one++;
+      }
+
+      result_two = algorithm_two->compare(face);
+      // cout << "Alg two: " << result << endl;
+      if (result_two > -1)
+      {
+        accept_count_alg_two++;
+      }
+
+      result_three = algorithm_three->compare(face);
+      // cout << "Alg three: " << result << endl; 
+      if (result_three > -1)
+      {
+        accept_count_alg_three++;
+      }
+
+      if (result_one > -1 && result_two > -1 && result_three > -1)
       {
         return true;
       }
@@ -207,6 +234,7 @@ void test_algorithms()
   int test_count = 0;
   int used_count = 0;
   int accepted_count =0;
+  face_detect = new Face_Detect();
 
   srand(time(NULL));
 
@@ -219,6 +247,7 @@ void test_algorithms()
 
   for(int iCount = 0; iCount < MAX_USERS; iCount++)
   {
+    rand_num++;
     // Need users with at least two images
     bool user_found = false;
     while (!user_found)
@@ -237,6 +266,11 @@ void test_algorithms()
       {
         user_found = true;
         cout << "Found user..." << endl;
+
+        if(face_detect->has_face(imread(test_dir, CV_LOAD_IMAGE_COLOR)))
+        {
+          users_quick.push_back((face_detect->get_face_arr()).at(0));
+        }
       }
       else
       {
@@ -255,9 +289,9 @@ void test_algorithms()
         Mat tmpMat = imread(dir, CV_LOAD_IMAGE_GRAYSCALE);
         resize(tmpMat, tmpMat, IMAGE_SIZE, 0, 0, CV_INTER_AREA);
 
-        users_one.push_back(tmpMat);
-        users_two.push_back(tmpMat);
-        users_three.push_back(tmpMat);
+        users_one.push_back(tmpMat.clone());
+        users_two.push_back(tmpMat.clone());
+        users_three.push_back(tmpMat.clone());
         
         labels.push_back(iCount + 1);
       }
@@ -291,15 +325,22 @@ void test_algorithms()
     }
     else
     {
-      cout << "End of test..." << endl;
-      cout << "Data set size: " << test_count << endl;
-      cout << "Used: " << used_count << endl;
-      cout << "Accepted Count: " << accepted_count << endl;
-      exit(0);
+
     }
 
     test_count++;
   }
+
+  cout << "End of test..." << endl;
+  cout << "Data set size: " << test_count << endl;
+  cout << "Used: " << used_count << endl;
+  cout << "Users in database: " << MAX_USERS << endl;
+  cout << "Accepted Count: " << accepted_count << endl;
+  cout << "Alg_quick acceptance: " << accept_count_quick << endl;
+  cout << "Alg_one acceptance: " << accept_count_alg_one << endl;
+  cout << "Alg_two acceptance: " << accept_count_alg_two << endl;
+  cout << "Alg_three acceptance: " << accept_count_alg_three << endl;
+  exit(0);
 }
 
 //
